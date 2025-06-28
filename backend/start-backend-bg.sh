@@ -23,6 +23,14 @@ source venv/bin/activate
 echo "의존성 설치 중..."
 pip install -r requirements.txt > /dev/null 2>&1
 
+# 데이터베이스 초기화 (샘플 데이터 포함)
+echo "데이터베이스 초기화 중..."
+if ! python init_db.py; then
+    echo "❌ 데이터베이스 초기화에 실패했습니다."
+    echo "Python 스크립트 실행 중 오류가 발생했습니다."
+    exit 1
+fi
+
 # FastAPI 서버 백그라운드 실행
 echo "FastAPI 서버를 백그라운드에서 시작합니다..."
 nohup uvicorn main:app --host 0.0.0.0 --port 8080 > backend.log 2>&1 &
@@ -48,6 +56,14 @@ if ps -p $BACKEND_PID > /dev/null; then
     echo "./stop-backend.sh"
 else
     echo "❌ 백엔드 서버 시작에 실패했습니다."
-    echo "로그를 확인하세요: cat backend/backend.log"
+    echo ""
+    echo "=== 백엔드 로그 내용 ==="
+    if [ -f "backend.log" ]; then
+        cat backend.log
+    else
+        echo "로그 파일을 찾을 수 없습니다."
+    fi
+    echo "========================"
+    echo ""
     exit 1
 fi
