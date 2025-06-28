@@ -21,10 +21,11 @@ source venv/bin/activate
 
 # 의존성 설치
 echo "의존성 설치 중..."
+
 pip3 install -r requirements.txt
 
 pip3 install requests
-
+pip3 install sqlalchemy
 pip3 install passlib
 
 # 데이터베이스 초기화 (샘플 데이터 포함)
