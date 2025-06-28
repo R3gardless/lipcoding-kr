@@ -7,16 +7,17 @@ import io
 import binascii
 from PIL import Image
 
-from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Query
+from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response, RedirectResponse
+from fastapi.responses import Response, RedirectResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, LargeBinary, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, validator, ValidationError
 import uvicorn
 
 # JWT 설정
@@ -53,6 +54,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 예외 핸들러
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Pydantic 검증 오류를 400 Bad Request로 변환"""
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "Validation error"}
+    )
 
 # 데이터베이스 모델
 class User(Base):
@@ -212,6 +222,46 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise credentials_exception
     return user
 
+def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    """토큰이 없어도 401 대신 None을 반환하는 버전"""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        payload = jwt.decode(
+            credentials.credentials, 
+            SECRET_KEY, 
+            algorithms=[ALGORITHM],
+            options={"verify_aud": False}
+        )
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except JWTError as e:
+        print(f"JWT Error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
 def validate_image(image_data: bytes) -> tuple[bool, str]:
     """이미지 유효성 검사"""
     try:
@@ -242,20 +292,35 @@ async def root():
     return RedirectResponse(url="/swagger-ui")
 
 @app.post("/api/signup", status_code=201)
-async def signup(request: SignupRequest, db: Session = Depends(get_db)):
+async def signup(request: dict, db: Session = Depends(get_db)):
     """회원가입"""
+    # 필수 필드 검증
+    required_fields = ["email", "password", "name", "role"]
+    for field in required_fields:
+        if field not in request:
+            raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+    
+    # 역할 검증
+    if request["role"] not in ["mentor", "mentee"]:
+        raise HTTPException(status_code=400, detail="Role must be either mentor or mentee")
+    
+    # 이메일 형식 검증 (간단한 검증)
+    email = request["email"]
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
     # 이메일 중복 확인
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    existing_user = db.query(User).filter(User.email == email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     # 사용자 생성
-    hashed_password = get_password_hash(request.password)
+    hashed_password = get_password_hash(request["password"])
     user = User(
-        email=request.email,
+        email=email,
         password_hash=hashed_password,
-        name=request.name,
-        role=request.role
+        name=request["name"],
+        role=request["role"]
     )
     
     db.add(user)
@@ -263,11 +328,18 @@ async def signup(request: SignupRequest, db: Session = Depends(get_db)):
     return {"message": "User created successfully"}
 
 @app.post("/api/login", response_model=TokenResponse)
-async def login(request: LoginRequest, db: Session = Depends(get_db)):
+async def login(request: dict, db: Session = Depends(get_db)):
     """로그인"""
-    user = db.query(User).filter(User.email == request.email).first()
+    # 필수 필드 검증
+    if "email" not in request or "password" not in request:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing email or password"
+        )
     
-    if not user or not verify_password(request.password, user.password_hash):
+    user = db.query(User).filter(User.email == request["email"]).first()
+    
+    if not user or not verify_password(request["password"], user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -312,8 +384,17 @@ async def get_me(current_user: User = Depends(get_current_user)):
     )
 
 @app.get("/api/images/{role}/{user_id}")
-async def get_profile_image(role: str, user_id: int, db: Session = Depends(get_db)):
+async def get_profile_image(
+    role: str, 
+    user_id: int, 
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """프로필 이미지 조회"""
+    # 역할 검증
+    if role not in ["mentor", "mentee"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    
     user = db.query(User).filter(User.id == user_id, User.role == role).first()
     
     if not user:
@@ -328,7 +409,7 @@ async def get_profile_image(role: str, user_id: int, db: Session = Depends(get_d
 
 @app.put("/api/profile", response_model=UserResponse)
 async def update_profile(
-    request: ProfileRequest,
+    request: dict,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -336,13 +417,23 @@ async def update_profile(
     print(f"프로필 업데이트 요청: {request}")
     print(f"현재 사용자: {current_user.id}, 역할: {current_user.role}")
     
-    current_user.name = request.name
-    current_user.bio = request.bio
+    # 필수 필드 검증
+    required_fields = ["id", "name", "role", "bio"]
+    for field in required_fields:
+        if field not in request:
+            raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+    
+    # 역할 검증
+    if request["role"] not in ["mentor", "mentee"]:
+        raise HTTPException(status_code=400, detail="Role must be either mentor or mentee")
+    
+    current_user.name = request["name"]
+    current_user.bio = request["bio"]
     
     # 이미지 처리
-    if request.image:
+    if "image" in request and request["image"]:
         try:
-            image_data = base64.b64decode(request.image)
+            image_data = base64.b64decode(request["image"])
             is_valid, message = validate_image(image_data)
             if not is_valid:
                 print(f"이미지 유효성 검사 실패: {message}")
@@ -361,9 +452,9 @@ async def update_profile(
             raise HTTPException(status_code=400, detail=error_msg)
     
     # 멘토인 경우 스킬 처리
-    if current_user.role == "mentor" and request.skills:
+    if current_user.role == "mentor" and "skills" in request and request["skills"]:
         import json
-        current_user.skills = json.dumps(request.skills)
+        current_user.skills = json.dumps(request["skills"])
     
     db.commit()
     
@@ -444,7 +535,7 @@ async def get_mentors(
 
 @app.post("/api/match-requests", response_model=MatchRequestResponse)
 async def create_match_request(
-    request: MatchRequestCreate,
+    request: dict,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -452,8 +543,14 @@ async def create_match_request(
     if current_user.role != "mentee":
         raise HTTPException(status_code=403, detail="Only mentees can create match requests")
     
+    # 필수 필드 검증
+    required_fields = ["mentorId", "menteeId", "message"]
+    for field in required_fields:
+        if field not in request:
+            raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+    
     # 멘토 존재 확인
-    mentor = db.query(User).filter(User.id == request.mentorId, User.role == "mentor").first()
+    mentor = db.query(User).filter(User.id == request["mentorId"], User.role == "mentor").first()
     if not mentor:
         raise HTTPException(status_code=400, detail="Mentor not found")
     
@@ -468,14 +565,15 @@ async def create_match_request(
     
     # 매칭 요청 생성
     match_request = MatchRequest(
-        mentor_id=request.mentorId,
-        mentee_id=current_user.id,
-        message=request.message,
+        mentor_id=request["mentorId"],
+        mentee_id=request["menteeId"],
+        message=request["message"],
         status="pending"
     )
     
     db.add(match_request)
     db.commit()
+    db.refresh(match_request)
     
     return MatchRequestResponse(
         id=match_request.id,
