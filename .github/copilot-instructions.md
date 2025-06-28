@@ -162,3 +162,12 @@ id, mentor_id, mentee_id, message, status, created_at, updated_at
 - 실행 명령어 제공
 - 3시간 제한시간 내 완성
 - API 및 UI 테스트 통과 필수
+
+## 참고 문헌
+
+이 개발 가이드는 다음 문서들을 참고하여 작성되었습니다:
+
+- [API 명세서](../mentor-mentee-api-spec.md) - 백엔드 API 엔드포인트 상세 명세
+- [평가 기준](../mentor-mentee-app-assessment.md) - 앱 평가 방법 및 기준
+- [개발 요구사항](../mentor-mentee-app-requirements.md) - 기술적 요구사항 및 제약사항
+- [사용자 스토리](../mentor-mentee-app-user-stories.md) - 기능별 사용자 스토리 및 테스트 요구사항
