@@ -365,7 +365,7 @@ async def login(request: dict, db: Session = Depends(get_db)):
         # 필수 필드 검증
         if "email" not in request or "password" not in request:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Missing email or password"
             )
         
@@ -545,7 +545,7 @@ async def get_mentors(
     """멘토 목록 조회 (멘티 전용)"""
     try:
         if current_user.role != "mentee":
-            raise HTTPException(status_code=401, detail="Only mentees can access mentor list")
+            raise HTTPException(status_code=403, detail="Only mentees can access mentor list")
         
         query = db.query(User).filter(User.role == "mentor")
         
@@ -603,7 +603,7 @@ async def create_match_request(
     """매칭 요청 생성 (멘티 전용)"""
     try:
         if current_user.role != "mentee":
-            raise HTTPException(status_code=401, detail="Only mentees can create match requests")
+            raise HTTPException(status_code=403, detail="Only mentees can create match requests")
         
         # 필수 필드 검증
         required_fields = ["mentorId", "menteeId", "message"]
@@ -658,7 +658,7 @@ async def get_incoming_requests(
     """나에게 들어온 요청 목록 (멘토 전용)"""
     try:
         if current_user.role != "mentor":
-            raise HTTPException(status_code=401, detail="Only mentors can access incoming requests")
+            raise HTTPException(status_code=403, detail="Only mentors can access incoming requests")
         
         requests = db.query(MatchRequest).filter(MatchRequest.mentor_id == current_user.id).all()
         
@@ -685,7 +685,7 @@ async def get_outgoing_requests(
 ):
     """내가 보낸 요청 목록 (멘티 전용)"""
     if current_user.role != "mentee":
-        raise HTTPException(status_code=401, detail="Only mentees can access outgoing requests")
+        raise HTTPException(status_code=403, detail="Only mentees can access outgoing requests")
     
     requests = db.query(MatchRequest).filter(MatchRequest.mentee_id == current_user.id).all()
     
@@ -708,7 +708,7 @@ async def accept_request(
 ):
     """요청 수락 (멘토 전용)"""
     if current_user.role != "mentor":
-        raise HTTPException(status_code=401, detail="Only mentors can accept requests")
+        raise HTTPException(status_code=403, detail="Only mentors can accept requests")
     
     # 요청 확인
     match_request = db.query(MatchRequest).filter(
@@ -749,7 +749,7 @@ async def reject_request(
 ):
     """요청 거절 (멘토 전용)"""
     if current_user.role != "mentor":
-        raise HTTPException(status_code=401, detail="Only mentors can reject requests")
+        raise HTTPException(status_code=403, detail="Only mentors can reject requests")
     
     # 요청 확인
     match_request = db.query(MatchRequest).filter(
@@ -781,7 +781,7 @@ async def cancel_request(
 ):
     """요청 취소 (멘티 전용)"""
     if current_user.role != "mentee":
-        raise HTTPException(status_code=401, detail="Only mentees can cancel requests")
+        raise HTTPException(status_code=403, detail="Only mentees can cancel requests")
     
     # 요청 확인
     match_request = db.query(MatchRequest).filter(
