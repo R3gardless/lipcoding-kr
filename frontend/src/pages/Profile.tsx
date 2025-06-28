@@ -70,12 +70,29 @@ const Profile: React.FC = () => {
         return;
       }
 
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string);
+      // 이미지 해상도 검증
+      const img = new Image();
+      img.onload = () => {
+        const { width, height } = img;
+        if (width < 500 || width > 1000 || height < 500 || height > 1000) {
+          setMessage({ 
+            type: 'error', 
+            text: `이미지 크기는 500x500 ~ 1000x1000 픽셀이어야 합니다. (현재: ${width}x${height})` 
+          });
+          return;
+        }
+
+        // 모든 검증 통과
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+        setMessage({ type: '', text: '' });
       };
-      reader.readAsDataURL(file);
+      
+      img.onerror = () => {
+        setMessage({ type: 'error', text: '이미지를 로드할 수 없습니다.' });
+      };
+      
+      img.src = URL.createObjectURL(file);
     }
   };
 
@@ -129,7 +146,8 @@ const Profile: React.FC = () => {
       updateUser(response.data);
       setMessage({ type: 'success', text: '프로필이 성공적으로 업데이트되었습니다.' });
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.response?.data?.message || '프로필 업데이트에 실패했습니다.' });
+      const errorMessage = error.response?.data?.detail || error.response?.data?.message || '프로필 업데이트에 실패했습니다.';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setIsLoading(false);
     }

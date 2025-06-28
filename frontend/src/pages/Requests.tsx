@@ -184,19 +184,22 @@ const RequestCard: React.FC<RequestCardProps> = ({
           </Typography>
         </Box>
 
-        <Paper
-          className="request-message"
-          data-mentee={request.menteeId.toString()}
-          elevation={1}
-          sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}
+        <div 
+          className="request-message" 
+          {...({ mentee: request.menteeId.toString() } as any)}
         >
-          <Typography variant="body2" fontWeight="bold" gutterBottom>
-            메시지:
-          </Typography>
-          <Typography variant="body2">
-            {request.message}
-          </Typography>
-        </Paper>
+          <Paper
+            elevation={1}
+            sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}
+          >
+            <Typography variant="body2" fontWeight="bold" gutterBottom>
+              메시지:
+            </Typography>
+            <Typography variant="body2">
+              {request.message}
+            </Typography>
+          </Paper>
+        </div>
 
         {userRole === 'mentor' && request.status === 'pending' && (
           <Box display="flex" gap={1}>

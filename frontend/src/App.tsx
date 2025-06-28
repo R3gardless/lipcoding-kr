@@ -10,14 +10,39 @@ import Mentors from './pages/Mentors';
 import Requests from './pages/Requests';
 import './App.css';
 
-// Material-UI 테마 생성
+// Material-UI 무채색 테마 생성
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: '#1976d2',
+      main: '#424242',
+      light: '#6d6d6d',
+      dark: '#1b1b1b',
     },
     secondary: {
-      main: '#dc004e',
+      main: '#616161',
+      light: '#8e8e8e',
+      dark: '#373737',
+    },
+    background: {
+      default: '#fafafa',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#212121',
+      secondary: '#757575',
+    },
+    grey: {
+      50: '#fafafa',
+      100: '#f5f5f5',
+      200: '#eeeeee',
+      300: '#e0e0e0',
+      400: '#bdbdbd',
+      500: '#9e9e9e',
+      600: '#757575',
+      700: '#616161',
+      800: '#424242',
+      900: '#212121',
     },
   },
   breakpoints: {
@@ -32,9 +57,11 @@ const theme = createTheme({
   typography: {
     h4: {
       fontWeight: 600,
+      color: '#212121',
     },
     h6: {
       fontWeight: 600,
+      color: '#212121',
     },
   },
 });

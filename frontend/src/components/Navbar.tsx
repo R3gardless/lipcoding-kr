@@ -118,7 +118,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#1976d2' }}>
+      <AppBar position="static" sx={{ backgroundColor: '#424242' }}>
         <Toolbar>
           {isMobile && (
             <IconButton
@@ -132,7 +132,20 @@ const Navbar: React.FC = () => {
             </IconButton>
           )}
           
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h6" 
+            component={Link}
+            to="/requests"
+            sx={{ 
+              flexGrow: 1,
+              textDecoration: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8
+              }
+            }}
+          >
             멘토-멘티 매칭
           </Typography>
 
