@@ -13,20 +13,21 @@ echo ""
 if [ ! -d "venv" ]; then
     echo "Python 가상환경 생성 중..."
     python3 -m venv venv
+else
+    echo "기존 가상환경 재사용..."
 fi
 
 # 가상환경 활성화
 echo "가상환경 활성화 중..."
 source venv/bin/activate
 
+# pip 업그레이드
+echo "pip 업그레이드 중..."
+pip install --upgrade pip
+
 # 의존성 설치
 echo "의존성 설치 중..."
-
-pip3 install -r requirements.txt
-
-pip3 install requests
-pip3 install sqlalchemy
-pip3 install passlib
+pip install -r requirements.txt
 
 # 데이터베이스 초기화 (샘플 데이터 포함)
 echo "데이터베이스 초기화 중..."

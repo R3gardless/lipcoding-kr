@@ -1,14 +1,25 @@
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-sqlalchemy==2.0.23
-pillow==10.1.0
-python-dotenv==1.0.0
-email-validator==2.1.0
-requests==2.31.0
-pytest==7.4.0
-pytest-asyncio==0.21.1
-httpx==0.25.2
-pytest-cov==4.1.0
+# FastAPI와 관련 패키지
+fastapi
+uvicorn[standard]
+python-multipart
+
+# 인증 관련
+python-jose[cryptography]
+passlib[bcrypt]
+
+# 데이터베이스
+sqlalchemy
+
+# 이미지 처리
+pillow
+
+# 기타 유틸리티
+python-dotenv
+email-validator
+requests
+
+# 테스트 관련
+pytest
+pytest-asyncio
+httpx
+pytest-cov
