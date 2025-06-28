@@ -305,7 +305,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 @app.get("/api/images/{role}/{user_id}")
 async def get_profile_image(role: str, user_id: int, db: Session = Depends(get_db)):
     """프로필 이미지 조회"""
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id, User.role == role).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
