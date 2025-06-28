@@ -25,6 +25,8 @@ pip3 install -r requirements.txt
 
 pip3 install requests
 
+pip3 install passlib
+
 # 데이터베이스 초기화 (샘플 데이터 포함)
 echo "데이터베이스 초기화 중..."
 if ! python init_db.py; then
