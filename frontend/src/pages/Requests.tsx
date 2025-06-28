@@ -2,6 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { matchRequestAPI, MatchRequest } from '../api/api';
 import Navbar from '../components/Navbar';
+import {
+  Container,
+  Paper,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Button,
+  Chip,
+  CircularProgress,
+} from '@mui/material';
+import { CheckCircle, Cancel, Delete } from '@mui/icons-material';
 
 const Requests: React.FC = () => {
   const { user } = useAuth();
@@ -76,31 +88,36 @@ const Requests: React.FC = () => {
   };
 
   if (!user) {
-    return <div>로딩 중...</div>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div>
+    <>
       <Navbar />
-      <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h2" textAlign="center" gutterBottom>
           {user.role === 'mentor' ? '받은 요청 관리' : '보낸 요청 관리'}
-        </h2>
+        </Typography>
         
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>로딩 중...</div>
+          <Box textAlign="center" py={4}>
+            <CircularProgress />
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              로딩 중...
+            </Typography>
+          </Box>
         ) : requests.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          }}>
-            {user.role === 'mentor' ? '받은 요청이 없습니다.' : '보낸 요청이 없습니다.'}
-          </div>
+          <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="body1">
+              {user.role === 'mentor' ? '받은 요청이 없습니다.' : '보낸 요청이 없습니다.'}
+            </Typography>
+          </Paper>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <Box display="flex" flexDirection="column" gap={2}>
             {requests.map((request) => (
               <RequestCard
                 key={request.id}
@@ -113,10 +130,10 @@ const Requests: React.FC = () => {
                 getStatusText={getStatusText}
               />
             ))}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Container>
+    </>
   );
 };
 
@@ -139,107 +156,86 @@ const RequestCard: React.FC<RequestCardProps> = ({
   getStatusColor,
   getStatusText,
 }) => {
+  const getStatusSeverity = (status: string): 'success' | 'error' | 'warning' | 'info' => {
+    switch (status) {
+      case 'accepted': return 'success';
+      case 'rejected': return 'error';
+      case 'cancelled': return 'warning';
+      default: return 'info';
+    }
+  };
+
   return (
-    <div style={{
-      backgroundColor: 'white',
-      padding: '1.5rem',
-      borderRadius: '8px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-        <div>
-          <h3 style={{ margin: '0 0 0.5rem 0' }}>
-            {userRole === 'mentor' ? `멘티 ID: ${request.menteeId}` : `멘토 ID: ${request.mentorId}`}
-          </h3>
-          <div
-            style={{
-              display: 'inline-block',
-              padding: '0.25rem 0.75rem',
-              borderRadius: '12px',
-              backgroundColor: getStatusColor(request.status),
-              color: 'white',
-              fontSize: '0.875rem',
-              fontWeight: 'bold',
-            }}
-          >
-            {getStatusText(request.status)}
-          </div>
-        </div>
-        <span style={{ color: '#6c757d', fontSize: '0.875rem' }}>
-          요청 ID: {request.id}
-        </span>
-      </div>
+    <Card elevation={3}>
+      <CardContent>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+          <Box>
+            <Typography variant="h6" component="h3" gutterBottom>
+              {userRole === 'mentor' ? `멘티 ID: ${request.menteeId}` : `멘토 ID: ${request.mentorId}`}
+            </Typography>
+            <Chip
+              label={getStatusText(request.status)}
+              color={getStatusSeverity(request.status)}
+              size="small"
+            />
+          </Box>
+          <Typography variant="body2" color="text.secondary">
+            요청 ID: {request.id}
+          </Typography>
+        </Box>
 
-      <div
-        className="request-message"
-        data-mentee={request.menteeId.toString()}
-        style={{
-          backgroundColor: '#f8f9fa',
-          padding: '1rem',
-          borderRadius: '4px',
-          marginBottom: '1rem',
-          border: '1px solid #dee2e6',
-        }}
-      >
-        <strong>메시지:</strong>
-        <p style={{ margin: '0.5rem 0 0 0' }}>{request.message}</p>
-      </div>
-
-      {userRole === 'mentor' && request.status === 'pending' && (
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button
-            id="accept"
-            onClick={() => onAccept(request.id)}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            수락
-          </button>
-          <button
-            id="reject"
-            onClick={() => onReject(request.id)}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '1rem',
-            }}
-          >
-            거절
-          </button>
-        </div>
-      )}
-
-      {userRole === 'mentee' && request.status === 'pending' && (
-        <button
-          onClick={() => onCancel(request.id)}
-          style={{
-            width: '100%',
-            padding: '0.75rem',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-          }}
+        <Paper
+          className="request-message"
+          data-mentee={request.menteeId.toString()}
+          elevation={1}
+          sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}
         >
-          요청 취소
-        </button>
-      )}
-    </div>
+          <Typography variant="body2" fontWeight="bold" gutterBottom>
+            메시지:
+          </Typography>
+          <Typography variant="body2">
+            {request.message}
+          </Typography>
+        </Paper>
+
+        {userRole === 'mentor' && request.status === 'pending' && (
+          <Box display="flex" gap={1}>
+            <Button
+              id="accept"
+              onClick={() => onAccept(request.id)}
+              variant="contained"
+              color="success"
+              fullWidth
+              startIcon={<CheckCircle />}
+            >
+              수락
+            </Button>
+            <Button
+              id="reject"
+              onClick={() => onReject(request.id)}
+              variant="contained"
+              color="error"
+              fullWidth
+              startIcon={<Cancel />}
+            >
+              거절
+            </Button>
+          </Box>
+        )}
+
+        {userRole === 'mentee' && request.status === 'pending' && (
+          <Button
+            onClick={() => onCancel(request.id)}
+            variant="contained"
+            color="secondary"
+            fullWidth
+            startIcon={<Delete />}
+          >
+            요청 취소
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

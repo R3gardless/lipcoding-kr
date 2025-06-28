@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../api/api';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  MenuItem,
+  CircularProgress,
+} from '@mui/material';
 
 const Signup: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -15,7 +26,7 @@ const Signup: React.FC = () => {
   
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -43,171 +54,110 @@ const Signup: React.FC = () => {
 
   if (success) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          textAlign: 'center',
-        }}>
-          <h2 style={{ color: '#28a745', marginBottom: '1rem' }}>회원가입 완료!</h2>
-          <p>로그인 페이지로 이동합니다...</p>
-        </div>
-      </div>
+      <Container maxWidth="sm" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <Paper elevation={3} sx={{ p: 4, textAlign: 'center', width: '100%' }}>
+          <Typography variant="h4" color="success.main" gutterBottom>
+            회원가입 완료!
+          </Typography>
+          <Typography variant="body1">
+            로그인 페이지로 이동합니다...
+          </Typography>
+        </Paper>
+      </Container>
     );
   }
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px',
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>회원가입</h2>
+    <Container maxWidth="sm" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
+        <Typography variant="h4" component="h2" textAlign="center" gutterBottom>
+          회원가입
+        </Typography>
         
         {error && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            marginBottom: '1rem',
-          }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
-          </div>
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              이메일
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <TextField
+            id="email"
+            name="email"
+            type="email"
+            label="이메일"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              비밀번호
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+          <TextField
+            id="password"
+            name="password"
+            type="password"
+            label="비밀번호"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              이름
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+          <TextField
+            id="name"
+            name="name"
+            type="text"
+            label="이름"
+            value={formData.name}
+            onChange={handleChange}
+            required
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          />
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="role" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              역할
-            </label>
-            <select
-              id="role"
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            >
-              <option value="mentee">멘티</option>
-              <option value="mentor">멘토</option>
-            </select>
-          </div>
+          <TextField
+            id="role"
+            name="role"
+            select
+            label="역할"
+            value={formData.role}
+            onChange={handleChange}
+            fullWidth
+            margin="normal"
+            variant="outlined"
+          >
+            <MenuItem value="mentee">멘티</MenuItem>
+            <MenuItem value="mentor">멘토</MenuItem>
+          </TextField>
 
-          <button
+          <Button
             id="signup"
             type="submit"
             disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
-            }}
+            fullWidth
+            variant="contained"
+            size="large"
+            sx={{ mt: 3, mb: 2 }}
           >
-            {isLoading ? '가입 중...' : '회원가입'}
-          </button>
-        </form>
+            {isLoading ? <CircularProgress size={24} /> : '회원가입'}
+          </Button>
+        </Box>
 
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <span>이미 계정이 있으신가요? </span>
-          <Link to="/login" style={{ color: '#007bff', textDecoration: 'none' }}>
-            로그인
-          </Link>
-        </div>
-      </div>
-    </div>
+        <Box textAlign="center" mt={2}>
+          <Typography variant="body2">
+            이미 계정이 있으신가요?{' '}
+            <Link to="/login" style={{ color: '#1976d2', textDecoration: 'none' }}>
+              로그인
+            </Link>
+          </Typography>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

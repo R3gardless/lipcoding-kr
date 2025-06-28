@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  CircularProgress,
+  useTheme,
+} from '@mui/material';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +21,7 @@ const Login: React.FC = () => {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,104 +39,106 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px',
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>로그인</h2>
+    <Container
+      component="main"
+      maxWidth="sm"
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        py: 3,
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          padding: { xs: 3, sm: 4 },
+          width: '100%',
+          maxWidth: 400,
+        }}
+      >
+        <Typography variant="h4" component="h1" align="center" gutterBottom>
+          로그인
+        </Typography>
         
         {error && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            marginBottom: '1rem',
-          }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
-          </div>
+          </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="email" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              이메일
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <TextField
+            id="email"
+            label="이메일"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            autoComplete="email"
+            autoFocus
+          />
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label htmlFor="password" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              비밀번호
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+          <TextField
+            id="password"
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            autoComplete="current-password"
+          />
 
-          <button
+          <Button
             id="login"
             type="submit"
+            fullWidth
+            variant="contained"
             disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
+            sx={{
+              mt: 3,
+              mb: 2,
+              py: 1.5,
+              position: 'relative',
             }}
           >
+            {isLoading && (
+              <CircularProgress
+                size={20}
+                sx={{
+                  position: 'absolute',
+                  left: '50%',
+                  marginLeft: '-10px',
+                }}
+              />
+            )}
             {isLoading ? '로그인 중...' : '로그인'}
-          </button>
-        </form>
+          </Button>
 
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <span>계정이 없으신가요? </span>
-          <Link to="/signup" style={{ color: '#007bff', textDecoration: 'none' }}>
-            회원가입
-          </Link>
-        </div>
-      </div>
-    </div>
+          <Box textAlign="center">
+            <Typography variant="body2">
+              계정이 없으신가요?{' '}
+              <Link
+                to="/signup"
+                style={{
+                  color: theme.palette.primary.main,
+                  textDecoration: 'none',
+                }}
+              >
+                회원가입
+              </Link>
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

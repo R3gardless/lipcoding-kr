@@ -2,6 +2,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { mentorAPI, matchRequestAPI, User } from '../api/api';
 import Navbar from '../components/Navbar';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Alert,
+  FormControl,
+  CircularProgress,
+  Avatar,
+} from '@mui/material';
+import { Search } from '@mui/icons-material';
 
 const Mentors: React.FC = () => {
   const { user } = useAuth();
@@ -58,10 +74,6 @@ const Mentors: React.FC = () => {
     fetchMentors();
   };
 
-  const handleSortChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSortBy(e.target.value);
-  };
-
   const sendRequest = async (mentorId: number, message: string) => {
     if (!user) return;
 
@@ -104,96 +116,100 @@ const Mentors: React.FC = () => {
   };
 
   if (!user || user.role !== 'mentee') {
-    return <div>멘티만 접근 가능한 페이지입니다.</div>;
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error">멘티만 접근 가능한 페이지입니다.</Alert>
+      </Container>
+    );
   }
 
   return (
-    <div>
+    <>
       <Navbar />
-      <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>멘토 찾기</h2>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h2" textAlign="center" gutterBottom>
+          멘토 찾기
+        </Typography>
         
         {/* 검색 및 정렬 */}
-        <div style={{
-          backgroundColor: 'white',
-          padding: '1.5rem',
-          borderRadius: '8px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          marginBottom: '2rem',
-        }}>
-          <form onSubmit={handleSearch} style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <input
+        <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+          <Box component="form" onSubmit={handleSearch} sx={{ mb: 2 }}>
+            <Box display="flex" gap={2} alignItems="center">
+              <TextField
                 id="search"
-                type="text"
                 value={searchSkill}
                 onChange={(e) => setSearchSkill(e.target.value)}
                 placeholder="기술 스택으로 검색 (예: React, Python)"
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  border: '1px solid #ced4da',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
+                variant="outlined"
+                size="medium"
+                fullWidth
+                InputProps={{
+                  startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}
               />
-              <button
+              <Button
                 type="submit"
-                style={{
-                  padding: '0.75rem 1.5rem',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
+                variant="contained"
+                size="large"
+                sx={{ minWidth: 100 }}
               >
                 검색
-              </button>
-            </div>
-          </form>
+              </Button>
+            </Box>
+          </Box>
 
-          <div>
-            <span style={{ marginRight: '1rem' }}>정렬:</span>
-            <label style={{ marginRight: '1rem' }}>
-              <input
-                id="name"
-                type="radio"
-                name="sortBy"
-                value="name"
-                checked={sortBy === 'name'}
-                onChange={handleSortChange}
-                style={{ marginRight: '0.5rem' }}
-              />
-              이름순
-            </label>
-            <label>
-              <input
-                id="skill"
-                type="radio"
-                name="sortBy"
-                value="skill"
-                checked={sortBy === 'skill'}
-                onChange={handleSortChange}
-                style={{ marginRight: '0.5rem' }}
-              />
-              기술 스택순
-            </label>
-          </div>
-        </div>
+          <Box>
+            <Typography variant="body1" component="span" sx={{ mr: 2 }}>
+              정렬:
+            </Typography>
+            <Box component="div" sx={{ display: 'inline-flex', gap: 2 }}>
+              <FormControl component="fieldset">
+                <Box display="flex" gap={2}>
+                  <Button
+                    id="name"
+                    variant={sortBy === 'name' ? 'contained' : 'outlined'}
+                    onClick={() => setSortBy('name')}
+                    size="small"
+                  >
+                    이름순
+                  </Button>
+                  <Button
+                    id="skill"
+                    variant={sortBy === 'skill' ? 'contained' : 'outlined'}
+                    onClick={() => setSortBy('skill')}
+                    size="small"
+                  >
+                    기술 스택순
+                  </Button>
+                </Box>
+              </FormControl>
+            </Box>
+          </Box>
+        </Paper>
 
         {/* 멘토 목록 */}
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>로딩 중...</div>
+          <Box textAlign="center" py={4}>
+            <CircularProgress />
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              로딩 중...
+            </Typography>
+          </Box>
         ) : mentors.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            검색 조건에 맞는 멘토가 없습니다.
-          </div>
+          <Box textAlign="center" py={4}>
+            <Typography variant="body1">
+              검색 조건에 맞는 멘토가 없습니다.
+            </Typography>
+          </Box>
         ) : (
-          <div style={{
+          <Box sx={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-            gap: '1.5rem',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
+            },
+            gap: 3,
           }}>
             {mentors.map((mentor) => (
               <MentorCard
@@ -205,10 +221,10 @@ const Mentors: React.FC = () => {
                 currentRequest={requests[mentor.id]}
               />
             ))}
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Container>
+    </>
   );
 };
 
@@ -240,152 +256,120 @@ const MentorCard: React.FC<MentorCardProps> = ({
   };
 
   return (
-    <div
-      className="mentor"
-      style={{
-        backgroundColor: 'white',
-        padding: '1.5rem',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      }}
-    >
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <img
-          src={mentor.profile.imageUrl}
-          alt={`${mentor.profile.name} 프로필`}
-          style={{
-            width: '80px',
-            height: '80px',
-            borderRadius: '50%',
-            objectFit: 'cover',
-            marginBottom: '0.5rem',
-          }}
-        />
-        <h3 style={{ margin: '0.5rem 0' }}>{mentor.profile.name}</h3>
-        <p style={{ color: '#6c757d', margin: '0.5rem 0' }}>{mentor.email}</p>
-      </div>
+    <Card className="mentor" elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Box textAlign="center" mb={2}>
+          <Avatar
+            src={mentor.profile.imageUrl}
+            alt={`${mentor.profile.name} 프로필`}
+            sx={{ width: 80, height: 80, margin: '0 auto', mb: 1 }}
+          />
+          <Typography variant="h6" component="h3" gutterBottom>
+            {mentor.profile.name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {mentor.email}
+          </Typography>
+        </Box>
 
-      <div style={{ marginBottom: '1rem' }}>
-        <p style={{ margin: '0.5rem 0' }}>{mentor.profile.bio}</p>
-      </div>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {mentor.profile.bio}
+        </Typography>
 
-      {mentor.profile.skills && mentor.profile.skills.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <strong>기술 스택:</strong>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
-            {mentor.profile.skills.map((skill, index) => (
-              <span
-                key={index}
-                style={{
-                  backgroundColor: '#e9ecef',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '12px',
-                  fontSize: '0.875rem',
-                }}
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+        {mentor.profile.skills && mentor.profile.skills.length > 0 && (
+          <Box mb={2}>
+            <Typography variant="body2" fontWeight="bold" gutterBottom>
+              기술 스택:
+            </Typography>
+            <Box display="flex" flexWrap="wrap" gap={0.5}>
+              {mentor.profile.skills.map((skill, index) => (
+                <Chip
+                  key={index}
+                  label={skill}
+                  size="small"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
 
-      {requestStatus ? (
-        <div style={{ textAlign: 'center' }}>
-          <div
-            id="request-status"
-            style={{
-              padding: '0.5rem',
-              borderRadius: '4px',
-              backgroundColor: requestStatus.color,
-              color: 'white',
-              fontWeight: 'bold',
-            }}
-          >
-            상태: {requestStatus.text}
-          </div>
-          {currentRequest && (
-            <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#6c757d' }}>
-              메시지: {currentRequest.message}
-            </div>
-          )}
-        </div>
-      ) : canSendRequest ? (
-        showRequestForm ? (
-          <form onSubmit={handleSendRequest}>
-            <textarea
-              id="message"
-              data-mentor-id={mentor.id}
-              data-testid={`message-${mentor.id}`}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="멘토링 요청 메시지를 입력하세요"
-              required
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                marginBottom: '0.5rem',
-                resize: 'vertical',
-                minHeight: '80px',
-              }}
-            />
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button
-                id="request"
-                type="submit"
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                요청 보내기
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowRequestForm(false)}
-                style={{
-                  flex: 1,
-                  padding: '0.5rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                }}
-              >
-                취소
-              </button>
-            </div>
-          </form>
+        {requestStatus ? (
+          <Box textAlign="center">
+            <Alert
+              id="request-status"
+              severity={
+                requestStatus.text === '수락됨' ? 'success' :
+                requestStatus.text === '거절됨' ? 'error' :
+                requestStatus.text === '취소됨' ? 'warning' : 'info'
+              }
+              sx={{ mb: 1 }}
+            >
+              상태: {requestStatus.text}
+            </Alert>
+            {currentRequest && (
+              <Typography variant="body2" color="text.secondary">
+                메시지: {currentRequest.message}
+              </Typography>
+            )}
+          </Box>
+        ) : canSendRequest ? (
+          showRequestForm ? (
+            <Box component="form" onSubmit={handleSendRequest}>
+              <TextField
+                id="message"
+                data-mentor-id={mentor.id}
+                data-testid={`message-${mentor.id}`}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="멘토링 요청 메시지를 입력하세요"
+                required
+                multiline
+                rows={3}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{ mb: 1 }}
+              />
+              <Box display="flex" gap={1}>
+                <Button
+                  id="request"
+                  type="submit"
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  fullWidth
+                >
+                  요청 보내기
+                </Button>
+                <Button
+                  onClick={() => setShowRequestForm(false)}
+                  variant="outlined"
+                  color="secondary"
+                  size="small"
+                  fullWidth
+                >
+                  취소
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <Button
+              onClick={() => setShowRequestForm(true)}
+              variant="contained"
+              color="primary"
+              fullWidth
+            >
+              멘토링 요청하기
+            </Button>
+          )
         ) : (
-          <button
-            onClick={() => setShowRequestForm(true)}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            멘토링 요청하기
-          </button>
-        )
-      ) : (
-        <div style={{ textAlign: 'center', color: '#6c757d' }}>
-          다른 요청이 대기 중입니다
-        </div>
-      )}
-    </div>
+          <Alert severity="warning">
+            다른 요청이 대기 중입니다
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

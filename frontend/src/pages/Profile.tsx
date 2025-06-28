@@ -2,6 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { userAPI } from '../api/api';
 import Navbar from '../components/Navbar';
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Alert,
+  Avatar,
+  Chip,
+  IconButton,
+  CircularProgress,
+} from '@mui/material';
+import { PhotoCamera, Add, Close } from '@mui/icons-material';
 
 const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -126,46 +140,28 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div>
+    <>
       <Navbar />
-      <div style={{
-        maxWidth: '600px',
-        margin: '2rem auto',
-        padding: '2rem',
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '2rem' }}>프로필 관리</h2>
-        
-        {message.text && (
-          <div style={{
-            backgroundColor: message.type === 'error' ? '#f8d7da' : '#d4edda',
-            color: message.type === 'error' ? '#721c24' : '#155724',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            marginBottom: '1rem',
-          }}>
-            {message.text}
-          </div>
-        )}
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Typography variant="h4" component="h2" textAlign="center" gutterBottom>
+            프로필 관리
+          </Typography>
+          
+          {message.text && (
+            <Alert severity={message.type === 'error' ? 'error' : 'success'} sx={{ mb: 3 }}>
+              {message.text}
+            </Alert>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <img
-              id="profile-photo"
-              src={previewUrl}
-              alt="프로필 이미지"
-              style={{
-                width: '150px',
-                height: '150px',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid #dee2e6',
-                marginBottom: '1rem',
-              }}
-            />
-            <div>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Box textAlign="center" mb={4}>
+              <Avatar
+                id="profile-photo"
+                src={previewUrl}
+                alt="프로필 이미지"
+                sx={{ width: 150, height: 150, margin: '0 auto', mb: 2 }}
+              />
               <input
                 id="profile"
                 type="file"
@@ -173,156 +169,97 @@ const Profile: React.FC = () => {
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
-              <label
-                htmlFor="profile"
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  display: 'inline-block',
-                }}
-              >
-                이미지 변경
+              <label htmlFor="profile">
+                <IconButton color="primary" component="span">
+                  <PhotoCamera />
+                </IconButton>
+                <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+                  이미지 변경
+                </Typography>
               </label>
-            </div>
-          </div>
+            </Box>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              이름
-            </label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
-            />
-          </div>
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                id="name"
+                name="name"
+                label="이름"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                fullWidth
+                variant="outlined"
+              />
+            </Box>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label htmlFor="bio" style={{ display: 'block', marginBottom: '0.5rem' }}>
-              소개글
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleInputChange}
-              rows={4}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                resize: 'vertical',
-              }}
-            />
-          </div>
+            <Box sx={{ mb: 3 }}>
+              <TextField
+                id="bio"
+                name="bio"
+                label="소개글"
+                value={formData.bio}
+                onChange={handleInputChange}
+                multiline
+                rows={4}
+                fullWidth
+                variant="outlined"
+              />
+            </Box>
 
-          {user.role === 'mentor' && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label htmlFor="skillsets" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                기술 스택
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input
-                  id="skillsets"
-                  type="text"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                  placeholder="기술 스택을 입력하고 Enter를 누르세요"
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '1rem',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={addSkill}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  추가
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {formData.skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      backgroundColor: '#e9ecef',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '12px',
-                      fontSize: '0.875rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                    }}
+            {user.role === 'mentor' && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  기술 스택
+                </Typography>
+                <Box display="flex" gap={1} mb={2}>
+                  <TextField
+                    id="skillsets"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                    placeholder="기술 스택을 입력하고 Enter를 누르세요"
+                    variant="outlined"
+                    size="small"
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <Button
+                    onClick={addSkill}
+                    variant="outlined"
+                    startIcon={<Add />}
+                    size="small"
                   >
-                    {skill}
-                    <button
-                      type="button"
-                      onClick={() => removeSkill(skill)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#6c757d',
-                        cursor: 'pointer',
-                        fontSize: '1rem',
-                        padding: 0,
-                      }}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+                    추가
+                  </Button>
+                </Box>
+                <Box display="flex" flexWrap="wrap" gap={1}>
+                  {formData.skills.map((skill, index) => (
+                    <Chip
+                      key={index}
+                      label={skill}
+                      onDelete={() => removeSkill(skill)}
+                      deleteIcon={<Close />}
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
 
-          <button
-            id="save"
-            type="submit"
-            disabled={isLoading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-          >
-            {isLoading ? '저장 중...' : '프로필 저장'}
-          </button>
-        </form>
-      </div>
-    </div>
+            <Button
+              id="save"
+              type="submit"
+              disabled={isLoading}
+              fullWidth
+              variant="contained"
+              size="large"
+              sx={{ mt: 4 }}
+            >
+              {isLoading ? <CircularProgress size={24} /> : '프로필 저장'}
+            </Button>
+          </Box>
+        </Paper>
+      </Container>
+    </>
   );
 };
 
