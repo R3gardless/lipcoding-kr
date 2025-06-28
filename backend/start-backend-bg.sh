@@ -21,7 +21,9 @@ source venv/bin/activate
 
 # 의존성 설치
 echo "의존성 설치 중..."
-pip install -r requirements.txt
+pip3 install -r requirements.txt
+
+pip3 install requests
 
 # 데이터베이스 초기화 (샘플 데이터 포함)
 echo "데이터베이스 초기화 중..."
