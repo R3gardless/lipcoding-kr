@@ -486,3 +486,5 @@ $RECYCLE.BIN/
 venv/
 
 .vscode/
+
+테스트.md

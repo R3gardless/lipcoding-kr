@@ -8,8 +8,6 @@ echo "포트: 3000"
 echo "프론트엔드 URL: http://localhost:3000"
 echo ""
 
-cd frontend
-
 # Node.js 버전 확인
 if ! command -v node >/dev/null 2>&1; then
     echo "❌ Node.js가 설치되어 있지 않습니다."

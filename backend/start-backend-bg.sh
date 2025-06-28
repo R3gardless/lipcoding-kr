@@ -9,8 +9,6 @@ echo "API 엔드포인트: http://localhost:8080/api"
 echo "Swagger UI: http://localhost:8080/swagger-ui"
 echo ""
 
-cd backend
-
 # 가상환경이 없으면 생성
 if [ ! -d "venv" ]; then
     echo "Python 가상환경 생성 중..."
