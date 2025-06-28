@@ -4,6 +4,7 @@ from typing import Optional, Union, List
 import uuid
 import base64
 import io
+import binascii
 from PIL import Image
 
 from fastapi import FastAPI, HTTPException, Depends, status, File, UploadFile, Query
@@ -102,10 +103,18 @@ class TokenResponse(BaseModel):
     token: str
 
 class ProfileRequest(BaseModel):
+    id: int
     name: str
+    role: str
     bio: str
     image: Optional[str] = None  # Base64 encoded image
     skills: Optional[List[str]] = None
+    
+    @validator('role')
+    def validate_role(cls, v):
+        if v not in ['mentor', 'mentee']:
+            raise ValueError('Role must be either mentor or mentee')
+        return v
 
 class MatchRequestCreate(BaseModel):
     mentorId: int
@@ -203,27 +212,27 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise credentials_exception
     return user
 
-def validate_image(image_data: bytes) -> bool:
+def validate_image(image_data: bytes) -> tuple[bool, str]:
     """이미지 유효성 검사"""
     try:
         image = Image.open(io.BytesIO(image_data))
         
         # 포맷 확인
         if image.format not in ['JPEG', 'PNG']:
-            return False
+            return False, f"지원하지 않는 이미지 형식입니다. JPEG 또는 PNG만 가능합니다. (현재: {image.format})"
         
         # 크기 확인 (500x500 ~ 1000x1000)
         width, height = image.size
         if not (500 <= width <= 1000 and 500 <= height <= 1000):
-            return False
+            return False, f"이미지 크기는 500x500 ~ 1000x1000 픽셀이어야 합니다. (현재: {width}x{height})"
         
         # 파일 크기 확인 (1MB)
         if len(image_data) > 1024 * 1024:
-            return False
+            return False, f"이미지 파일 크기는 1MB 이하여야 합니다. (현재: {len(image_data) / 1024 / 1024:.2f}MB)"
         
-        return True
-    except Exception:
-        return False
+        return True, "유효한 이미지입니다."
+    except Exception as e:
+        return False, f"이미지 처리 중 오류가 발생했습니다: {str(e)}"
 
 # API 엔드포인트
 
@@ -324,6 +333,9 @@ async def update_profile(
     db: Session = Depends(get_db)
 ):
     """프로필 수정"""
+    print(f"프로필 업데이트 요청: {request}")
+    print(f"현재 사용자: {current_user.id}, 역할: {current_user.role}")
+    
     current_user.name = request.name
     current_user.bio = request.bio
     
@@ -331,11 +343,22 @@ async def update_profile(
     if request.image:
         try:
             image_data = base64.b64decode(request.image)
-            if not validate_image(image_data):
-                raise HTTPException(status_code=400, detail="Invalid image format or size")
+            is_valid, message = validate_image(image_data)
+            if not is_valid:
+                print(f"이미지 유효성 검사 실패: {message}")
+                raise HTTPException(status_code=400, detail=message)
             current_user.image_data = image_data
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid image data")
+            print("이미지 업데이트 성공")
+        except binascii.Error:
+            error_msg = "잘못된 base64 이미지 데이터입니다."
+            print(f"Base64 디코딩 오류: {error_msg}")
+            raise HTTPException(status_code=400, detail=error_msg)
+        except HTTPException:
+            raise
+        except Exception as e:
+            error_msg = f"이미지 처리 중 오류가 발생했습니다: {str(e)}"
+            print(f"이미지 처리 예외: {error_msg}")
+            raise HTTPException(status_code=400, detail=error_msg)
     
     # 멘토인 경우 스킬 처리
     if current_user.role == "mentor" and request.skills:
