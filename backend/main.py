@@ -196,7 +196,26 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    """Authorization 헤더를 직접 확인하여 401을 반환"""
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization header missing",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = auth_header.split(" ")[1]
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -205,7 +224,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     
     try:
         payload = jwt.decode(
-            credentials.credentials, 
+            token, 
             SECRET_KEY, 
             algorithms=[ALGORITHM],
             options={"verify_aud": False}  # audience 검증 비활성화
@@ -222,19 +241,26 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         raise credentials_exception
     return user
 
-def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
-    """토큰이 없어도 401 대신 None을 반환하는 버전"""
-    if not credentials:
+def get_current_user_optional(request: Request, db: Session = Depends(get_db)):
+    """토큰이 없어도 401 대신 None을 반환하는 버전 (실제론 401 반환)"""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header missing",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token = auth_header.split(" ")[1]
     try:
         payload = jwt.decode(
-            credentials.credentials, 
-            SECRET_KEY, 
+            token,
+            SECRET_KEY,
             algorithms=[ALGORITHM],
             options={"verify_aud": False}
         )
@@ -252,7 +278,6 @@ def get_current_user_optional(credentials: HTTPAuthorizationCredentials = Depend
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     user = db.query(User).filter(User.id == int(user_id)).first()
     if user is None:
         raise HTTPException(
